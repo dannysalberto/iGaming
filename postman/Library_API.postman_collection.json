@@ -1,0 +1,482 @@
+{
+    "info": {
+        "_postman_id": "9f8d5b3e-7c41-4a2b-9e6a-1d2c3b4a5e6f",
+        "name": "Library API - Laravel 12",
+        "description": "Colección oficial para consumir la API REST de Gestión de Biblioteca (/books y /categories).\n\nAutenticación configurada a nivel de colección mediante HTTP Basic Auth:\n- Usuario por defecto (DatabaseSeeder): test@example.com\n- Contraseña por defecto: password\n\nLímites de tasa (Rate Limiting):\n- Lecturas (GET): 120 peticiones / minuto\n- Escrituras (POST, PUT, DELETE): 60 peticiones / minuto\n- Fallos Basic Auth: máx. 10 intentos fallidos / minuto por IP",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "auth": {
+        "type": "basic",
+        "basic": [
+            {
+                "key": "username",
+                "value": "{{basic_username}}",
+                "type": "string"
+            },
+            {
+                "key": "password",
+                "value": "{{basic_password}}",
+                "type": "string"
+            }
+        ]
+    },
+    "variable": [
+        {
+            "key": "base_url",
+            "value": "http://127.0.0.1:8000",
+            "type": "string"
+        },
+        {
+            "key": "basic_username",
+            "value": "test@example.com",
+            "type": "string"
+        },
+        {
+            "key": "basic_password",
+            "value": "password",
+            "type": "string"
+        },
+        {
+            "key": "category_id",
+            "value": "1",
+            "type": "string"
+        },
+        {
+            "key": "book_id",
+            "value": "1",
+            "type": "string"
+        },
+        {
+            "key": "created_category_id",
+            "value": "6",
+            "type": "string"
+        },
+        {
+            "key": "created_book_id",
+            "value": "1",
+            "type": "string"
+        }
+    ],
+    "item": [
+        {
+            "name": "1. Categorías",
+            "item": [
+                {
+                    "name": "Listar categorías",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/categories",
+                            "host": ["{{base_url}}"],
+                            "path": ["categories"]
+                        },
+                        "description": "Obtiene todas las categorías ordenadas alfabéticamente junto con el conteo de libros asociados (books_count)."
+                    }
+                },
+                {
+                    "name": "Detalle de categoría",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/categories/{{category_id}}",
+                            "host": ["{{base_url}}"],
+                            "path": ["categories", "{{category_id}}"]
+                        },
+                        "description": "Obtiene una categoría específica junto con sus libros asociados."
+                    }
+                },
+                {
+                    "name": "Crear categoría",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "const json = pm.response.json();",
+                                    "if (pm.response.code === 201 && json.data && json.data.id) {",
+                                    "    pm.collectionVariables.set('created_category_id', String(json.data.id));",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"Arquitectura de Software\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/categories",
+                            "host": ["{{base_url}}"],
+                            "path": ["categories"]
+                        },
+                        "description": "Registra una nueva categoría con nombre único y guarda su ID en {{created_category_id}}."
+                    }
+                },
+                {
+                    "name": "Actualizar categoría",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"Ingeniería y Arquitectura de Software\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/categories/{{created_category_id}}",
+                            "host": ["{{base_url}}"],
+                            "path": ["categories", "{{created_category_id}}"]
+                        },
+                        "description": "Actualiza el nombre de una categoría existente."
+                    }
+                },
+                {
+                    "name": "Eliminar categoría sin libros",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/categories/{{created_category_id}}",
+                            "host": ["{{base_url}}"],
+                            "path": ["categories", "{{created_category_id}}"]
+                        },
+                        "description": "Elimina una categoría siempre que no tenga libros asociados (de lo contrario responde 409 Conflict)."
+                    }
+                }
+            ]
+        },
+        {
+            "name": "2. Libros",
+            "item": [
+                {
+                    "name": "Listar libros (Paginado)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/books?per_page=20&page=1",
+                            "host": ["{{base_url}}"],
+                            "path": ["books"],
+                            "query": [
+                                {
+                                    "key": "per_page",
+                                    "value": "20",
+                                    "description": "Cantidad de registros por página (1..100, 20 por defecto si se omite o es inválido)."
+                                },
+                                {
+                                    "key": "page",
+                                    "value": "1",
+                                    "description": "Número de página (1-based)."
+                                }
+                            ]
+                        },
+                        "description": "Lista los libros incluyendo su categoría e indicador meta.has_more."
+                    }
+                },
+                {
+                    "name": "Filtrar libros por categoría",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/books?category={{category_id}}&per_page=20&page=1",
+                            "host": ["{{base_url}}"],
+                            "path": ["books"],
+                            "query": [
+                                {
+                                    "key": "category",
+                                    "value": "{{category_id}}"
+                                },
+                                {
+                                    "key": "per_page",
+                                    "value": "20"
+                                },
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Buscar libros por título, autor o año",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/books?search=Clean&per_page=20&page=1",
+                            "host": ["{{base_url}}"],
+                            "path": ["books"],
+                            "query": [
+                                {
+                                    "key": "search",
+                                    "value": "Clean"
+                                },
+                                {
+                                    "key": "per_page",
+                                    "value": "20"
+                                },
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Detalle de libro",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/books/{{book_id}}",
+                            "host": ["{{base_url}}"],
+                            "path": ["books", "{{book_id}}"]
+                        }
+                    }
+                },
+                {
+                    "name": "Crear libro",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "const json = pm.response.json();",
+                                    "if (pm.response.code === 201 && json.data && json.data.id) {",
+                                    "    pm.collectionVariables.set('created_book_id', String(json.data.id));",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"title\": \"El Aleph\",\n    \"author\": \"Jorge Luis Borges\",\n    \"description\": \"Colección clásica de cuentos fantásticos y filosóficos.\",\n    \"published_year\": 1949,\n    \"category_id\": {{category_id}}\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/books",
+                            "host": ["{{base_url}}"],
+                            "path": ["books"]
+                        }
+                    }
+                },
+                {
+                    "name": "Actualizar libro",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"title\": \"El Aleph (Edición Conmemorativa)\",\n    \"author\": \"Jorge Luis Borges\",\n    \"description\": \"Edición revisada y anotada.\",\n    \"published_year\": 1949,\n    \"category_id\": {{category_id}}\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/books/{{created_book_id}}",
+                            "host": ["{{base_url}}"],
+                            "path": ["books", "{{created_book_id}}"]
+                        }
+                    }
+                },
+                {
+                    "name": "Eliminar libro",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/books/{{created_book_id}}",
+                            "host": ["{{base_url}}"],
+                            "path": ["books", "{{created_book_id}}"]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "3. Seguridad y Casos de Control",
+            "item": [
+                {
+                    "name": "401 Sin credenciales (Auth desactivada)",
+                    "request": {
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/books",
+                            "host": ["{{base_url}}"],
+                            "path": ["books"]
+                        },
+                        "description": "Verifica que la API rechace peticiones sin credenciales con HTTP 401 y cabecera WWW-Authenticate."
+                    }
+                },
+                {
+                    "name": "401 Credenciales Basic inválidas",
+                    "request": {
+                        "auth": {
+                            "type": "basic",
+                            "basic": [
+                                {
+                                    "key": "username",
+                                    "value": "test@example.com",
+                                    "type": "string"
+                                },
+                                {
+                                    "key": "password",
+                                    "value": "clave-incorrecta",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/books",
+                            "host": ["{{base_url}}"],
+                            "path": ["books"]
+                        }
+                    }
+                },
+                {
+                    "name": "422 Error de validación al crear libro",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"title\": \"AB\",\n    \"author\": \"\",\n    \"published_year\": 3050,\n    \"category_id\": 99999\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/books",
+                            "host": ["{{base_url}}"],
+                            "path": ["books"]
+                        }
+                    }
+                },
+                {
+                    "name": "409 Conflicto al borrar categoría con libros",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/categories/1",
+                            "host": ["{{base_url}}"],
+                            "path": ["categories", "1"]
+                        }
+                    }
+                }
+            ]
+        }
+    ]
+}
